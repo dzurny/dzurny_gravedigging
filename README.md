@@ -96,7 +96,7 @@ The script supports both Czech and English languages. To add more languages:
 ## Support
 
 For support, please create an issue on the GitHub repository.
-Please note, blacklist the dzurny_gravesigging:giveitem trigger.
+Please note, blacklist the dzurny_gravedigging:giveitem trigger.
 ## License
 
 Feel free to do whatever you want with this script.
