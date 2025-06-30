@@ -113,58 +113,61 @@ function StartDigging(grave)
     TaskPlayAnim(PlayerPedId(), "amb@world_human_gardener_plant@male@base", "base", 8.0, -8.0, -1, 1, 0, false, false, false)
     
     -- Progress bar
-    if lib.progressBar({
-        duration = Config.DigTime,
-        label = L('digging'),
-        useWhileDead = false,
-        canCancel = true,
-        disable = {
-            car = true,
-            move = true,
-            combat = true,
-        },
-        anim = {
-            dict = "amb@world_human_gardener_plant@male@base",
-            clip = "base"
-        },
-    }) then
-        -- Success
-        local item = GetRandomItem()
-        local amount = math.random(item.min, item.max)
-        
-        TriggerServerEvent('dzurny_gravedigging:giveItem', item.item, amount)
-        ESX.ShowNotification(L('found_item', amount, item.label))
-        
-        -- Send dispatch to police
-        local data = exports['cd_dispatch']:GetPlayerInfo()
-        TriggerServerEvent('cd_dispatch:AddNotification', {
-            job_table = GetPoliceJobsForDispatch(), 
-            coords = data.coords,
-            title = L('dispatch_title'),
-            message = L('dispatch_message', data.sex, data.street), 
-            flash = 0,
-            unique_id = data.unique_id,
-            sound = 1,
-            blip = {
-                sprite = 431, 
-                scale = 1.2, 
-                colour = 3,
-                flashes = false, 
-                text = L('dispatch_blip'),
-                time = 5,
-                radius = 0,
-            }
-        })
-        
-        -- Start cooldown for this specific grave
-        cooldownGraves[grave.label] = true
-        SetTimeout(Config.Cooldown * 1000, function()
-            cooldownGraves[grave.label] = false
-        end)
-    else
-        -- Cancelled
-        ESX.ShowNotification(L('digging_cancelled'))
-    end
+if lib.progressBar({
+    duration = Config.DigTime,
+    label = L('digging'),
+    useWhileDead = false,
+    canCancel = true,
+    disable = {
+        car = true,
+        move = true,
+        combat = true,
+    },
+    anim = {
+        dict = "amb@world_human_gardener_plant@male@base",
+        clip = "base"
+    },
+}) then
+    -- Úspešné kopanie
+    local item = GetRandomItem()
+    local amount = math.random(item.min, item.max)
+    
+    -- Bezpečné volanie servera
+    TriggerServerEvent('dzurny_gravedigging:setRewardReady')
+    Wait(100)
+    TriggerServerEvent('dzurny_gravedigging:giveItem', item.item, amount)
+
+    ESX.ShowNotification(L('found_item', amount, item.label))
+
+    -- Dispatch pre políciu
+    local data = exports['cd_dispatch']:GetPlayerInfo()
+    TriggerServerEvent('cd_dispatch:AddNotification', {
+        job_table = GetPoliceJobsForDispatch(), 
+        coords = data.coords,
+        title = L('dispatch_title'),
+        message = L('dispatch_message', data.sex, data.street), 
+        flash = 0,
+        unique_id = data.unique_id,
+        sound = 1,
+        blip = {
+            sprite = 431, 
+            scale = 1.2, 
+            colour = 3,
+            flashes = false, 
+            text = L('dispatch_blip'),
+            time = 5,
+            radius = 0,
+        }
+    })
+
+    cooldownGraves[grave.label] = true
+    SetTimeout(Config.Cooldown * 1000, function()
+        cooldownGraves[grave.label] = false
+    end)
+else
+    -- Zrušené
+    ESX.ShowNotification(L('digging_cancelled'))
+end
     
     ClearPedTasks(PlayerPedId())
     isDigging = false
